@@ -268,32 +268,6 @@ export default function CrimeInferenceApp() {
               </div>
             </Section>
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`${suspect}-${crime}`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-              >
-                <InfoCard
-                  title={evaluation.guilty ? "Coupable" : "Non coupable"}
-                  description={`Verdict pour : is_guilty(${suspect}, ${crime})`}
-                  icon={
-                    evaluation.guilty ? (
-                      <CheckCircle2 className="w-6 h-6 text-green-700" />
-                    ) : (
-                      <XCircle className="w-6 h-6 text-rose-700" />
-                    )
-                  }
-                  isGuilty={evaluation.guilty}
-                />
-              </motion.div>
-            </AnimatePresence>
-
-          </div>
-
-          <div className="space-y-8">
             <Section
               title="Faits & Preuves"
               icon={<BookOpen className="w-5 h-5" />}
@@ -356,7 +330,6 @@ export default function CrimeInferenceApp() {
                 )}
               </div>
             </Section>
-            
 
             <Section
               title="Explications (Règles)"
@@ -407,6 +380,31 @@ export default function CrimeInferenceApp() {
                 )}
               </div>
             </Section>
+          </div>
+
+          <div className="space-y-8">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${suspect}-${crime}`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
+                <InfoCard
+                  title={evaluation.guilty ? "Coupable" : "Non coupable"}
+                  description={`Verdict pour : is_guilty(${suspect}, ${crime})`}
+                  icon={
+                    evaluation.guilty ? (
+                      <CheckCircle2 className="w-6 h-6 text-green-700" />
+                    ) : (
+                      <XCircle className="w-6 h-6 text-rose-700" />
+                    )
+                  }
+                  isGuilty={evaluation.guilty}
+                />
+              </motion.div>
+            </AnimatePresence>
 
             <Section
               title={`Aperçu rapide - ${crime}`}
