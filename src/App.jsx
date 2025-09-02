@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import {
   CheckCircle2,
   XCircle,
@@ -10,13 +10,10 @@ import {
   BookOpen,
 } from "lucide-react";
 
-const CRIMES = ["assassinat", "vol", "escroquerie"] as const;
-const SUSPECTS = ["john", "mary", "alice", "bruno", "sophie"] as const;
+const CRIMES = ["assassinat", "vol", "escroquerie"];
+const SUSPECTS = ["john", "mary", "alice", "bruno", "sophie"];
 
-type Crime = (typeof CRIMES)[number];
-type Suspect = (typeof SUSPECTS)[number];
-
-const DEFAULT_FACTS: Record<string, Record<Suspect, Set<Crime>>> = {
+const DEFAULT_FACTS = {
   has_motive: {
     john: new Set(["vol"]),
     mary: new Set(["assassinat"]),
@@ -54,23 +51,17 @@ const DEFAULT_FACTS: Record<string, Record<Suspect, Set<Crime>>> = {
   },
 };
 
-function cloneFacts(
-  facts: Record<string, Record<Suspect, Set<Crime>>>
-): Record<string, Record<Suspect, Set<Crime>>> {
-  const out: any = {};
+function cloneFacts(facts) {
+  const out = {};
   for (const pred of Object.keys(facts)) {
-    out[pred] = {} as Record<Suspect, Set<Crime>>;
+    out[pred] = {};
     for (const s of SUSPECTS) out[pred][s] = new Set(facts[pred][s]);
   }
   return out;
 }
 
-function isGuilty(
-  facts: Record<string, Record<Suspect, Set<Crime>>>,
-  suspect: Suspect,
-  crime: Crime
-) {
-  const H = (pred: string) => facts[pred]?.[suspect]?.has(crime) ?? false;
+function isGuilty(facts, suspect, crime) {
+  const H = (pred) => facts[pred]?.[suspect]?.has(crime) ?? false;
 
   if (crime === "vol" || crime === "assassinat") {
     const conds = [
@@ -79,7 +70,7 @@ function isGuilty(
       { pred: "has_fingerprint_on_weapon", ok: H("has_fingerprint_on_weapon") },
     ];
     const guilty = conds.every((c) => c.ok);
-    return { guilty, conds, anyOf: [] as string[] };
+    return { guilty, conds, anyOf: [] };
   }
 
   if (crime === "escroquerie") {
@@ -91,32 +82,24 @@ function isGuilty(
     const guilty = conds.every((c) => c.ok) && anyOf.some((a) => a.ok);
     return { guilty, conds, anyOf };
   }
-  return { guilty: false, conds: [], anyOf: [] as any[] };
+  return { guilty: false, conds: [], anyOf: [] };
 }
 
-const Section: React.FC<{
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}> = ({ title, icon, children }) => (
-  <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-xl shadow-gray-200/50">
+const Section = ({ title, icon, children }) => (
+  <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg shadow-gray-200/40">
     <div className="flex items-center gap-3 mb-4 text-gray-700">
       {icon}
-      <h3 className="text-sm font-semibold tracking-wide uppercase">{title}</h3>
+      <h3 className="text-xs font-semibold tracking-wide uppercase">{title}</h3>
     </div>
     {children}
   </div>
 );
 
-const Chip: React.FC<{
-  selected?: boolean;
-  onClick?: () => void;
-  children: React.ReactNode;
-}> = ({ selected, onClick, children }) => (
+const Chip = ({ selected, onClick, children }) => (
   <motion.button
     whileTap={{ scale: 0.95 }}
     onClick={onClick}
-    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border shadow-sm ${
+    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border shadow-sm ${
       selected
         ? "bg-stone-900 text-white border-stone-900"
         : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -126,28 +109,24 @@ const Chip: React.FC<{
   </motion.button>
 );
 
-const FactToggle: React.FC<{
-  label: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}> = ({ label, checked, onChange }) => (
+const FactToggle = ({ label, checked, onChange }) => (
   <motion.label
     whileHover={{ scale: 1.01 }}
-    className="flex items-start gap-4 px-4 py-3 rounded-2xl border bg-white shadow-sm transition-colors cursor-pointer"
+    className="flex items-start gap-3 px-3 py-2 rounded-xl border bg-white shadow-sm transition-colors cursor-pointer"
   >
-    <span className="text-sm font-medium text-gray-800 flex-grow leading-tight">
+    <span className="text-xs font-medium text-gray-800 flex-grow leading-tight">
       {label}
     </span>
     <button
       type="button"
       aria-pressed={checked}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 ${
+      className={`relative inline-flex h-5 w-10 shrink-0 items-center rounded-full transition-colors duration-200 ${
         checked ? "bg-gray-800" : "bg-gray-300"
       }`}
     >
       <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-200 ${
+        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
           checked ? "translate-x-5" : "translate-x-1"
         }`}
       />
@@ -155,38 +134,33 @@ const FactToggle: React.FC<{
   </motion.label>
 );
 
-const InfoCard: React.FC<{
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  isGuilty: boolean;
-}> = ({ title, description, icon, isGuilty }) => (
+const InfoCard = ({ title, description, icon, isGuilty }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ type: "spring", stiffness: 120, damping: 14 }}
-    className={`rounded-3xl p-6 border shadow-lg text-center ${
+    className={`rounded-2xl p-4 border shadow-md text-center ${
       isGuilty ? "bg-green-50 border-green-200" : "bg-rose-50 border-rose-200"
     }`}
   >
-    <div className="flex items-center justify-center gap-3 mb-3 text-2xl font-bold">
+    <div className="flex items-center justify-center gap-2 mb-2 text-xl font-bold">
       {icon}
       <h2
-        className={`text-xl font-bold ${
+        className={`text-lg font-bold ${
           isGuilty ? "text-green-800" : "text-rose-800"
         }`}
       >
         {title}
       </h2>
     </div>
-    <p className="text-sm text-gray-700">{description}</p>
+    <p className="text-xs text-gray-700">{description}</p>
   </motion.div>
 );
 
 export default function CrimeInferenceApp() {
   const [facts, setFacts] = useState(() => cloneFacts(DEFAULT_FACTS));
-  const [suspect, setSuspect] = useState<Suspect>("mary");
-  const [crime, setCrime] = useState<Crime>("assassinat");
+  const [suspect, setSuspect] = useState("mary");
+  const [crime, setCrime] = useState("assassinat");
 
   const evaluation = useMemo(
     () => isGuilty(facts, suspect, crime),
@@ -195,11 +169,11 @@ export default function CrimeInferenceApp() {
 
   const resetFacts = () => setFacts(cloneFacts(DEFAULT_FACTS));
 
-  const updateFact = (pred: string, s: Suspect, c: Crime, value: boolean) => {
+  const updateFact = (pred, s, c, value) => {
     setFacts((prev) => {
       const next = cloneFacts(prev);
-      if (!next[pred]) next[pred] = {} as any;
-      if (!next[pred][s]) next[pred][s] = new Set<Crime>();
+      if (!next[pred]) next[pred] = {};
+      if (!next[pred][s]) next[pred][s] = new Set();
       value ? next[pred][s].add(c) : next[pred][s].delete(c);
       return next;
     });
@@ -211,11 +185,11 @@ export default function CrimeInferenceApp() {
   }));
 
   return (
-    <div className="min-h-screen w-full bg-stone-100 text-gray-900 p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <header className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+    <div className="min-h-screen lg:h-screen w-full bg-stone-100 text-gray-900 p-4 lg:overflow-hidden">
+      <div className="max-w-7xl mx-auto space-y-4 lg:h-full">
+        <header className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-800">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-800">
               Enquête policière
             </h1>
           </div>
@@ -223,21 +197,21 @@ export default function CrimeInferenceApp() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={resetFacts}
-            className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium bg-white hover:bg-gray-50 shadow-sm"
+            className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium bg-white hover:bg-gray-50 shadow-sm"
           >
-            <RefreshCw className="w-4 h-4" /> Réinitialiser les faits
+            <RefreshCw className="w-3 h-3" /> Réinitialiser les faits
           </motion.button>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="space-y-8">
-            <Section title="Sélection" icon={<User className="w-5 h-5" />}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:h-[calc(100%-64px)]">
+          <div className="space-y-4 lg:overflow-hidden">
+            <Section title="Sélection" icon={<User className="w-4 h-4" />}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs mb-2 font-semibold text-gray-600 uppercase tracking-wider">
+                  <p className="text-[10px] mb-1.5 font-semibold text-gray-600 uppercase tracking-wider">
                     Suspects
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {SUSPECTS.map((s) => (
                       <Chip
                         key={s}
@@ -250,10 +224,10 @@ export default function CrimeInferenceApp() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs mb-2 font-semibold text-gray-600 uppercase tracking-wider">
+                  <p className="text-[10px] mb-1.5 font-semibold text-gray-600 uppercase tracking-wider">
                     Crimes
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {CRIMES.map((c) => (
                       <Chip
                         key={c}
@@ -270,9 +244,9 @@ export default function CrimeInferenceApp() {
 
             <Section
               title="Faits & Preuves"
-              icon={<BookOpen className="w-5 h-5" />}
+              icon={<BookOpen className="w-4 h-4" />}
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FactToggle
                   label={`has_motive`}
                   checked={facts.has_motive[suspect]?.has(crime) ?? false}
@@ -333,23 +307,23 @@ export default function CrimeInferenceApp() {
 
             <Section
               title="Explications (Règles)"
-              icon={<Gavel className="w-5 h-5" />}
+              icon={<Gavel className="w-4 h-4" />}
             >
               <div className="space-y-4">
                 {(evaluation.conds ?? []).length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
+                    <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
                       Conditions nécessaires (ET)
                     </p>
-                    <ul className="space-y-2">
+                    <ul className="space-y-1.5">
                       {evaluation.conds.map((c) => (
                         <li key={c.pred} className="flex items-center gap-2">
                           {c.ok ? (
-                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                            <CheckCircle2 className="w-3 h-3 text-green-600" />
                           ) : (
-                            <XCircle className="w-4 h-4 text-rose-600" />
+                            <XCircle className="w-3 h-3 text-rose-600" />
                           )}
-                          <code className="font-mono text-sm bg-gray-100 p-1 rounded">
+                          <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">
                             {`${c.pred}(${suspect}, ${crime})`}
                           </code>
                         </li>
@@ -359,18 +333,18 @@ export default function CrimeInferenceApp() {
                 )}
                 {(evaluation.anyOf ?? []).length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
+                    <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
                       Au moins une des conditions (OU)
                     </p>
-                    <ul className="space-y-2">
+                    <ul className="space-y-1.5">
                       {evaluation.anyOf.map((a) => (
                         <li key={a.pred} className="flex items-center gap-2">
                           {a.ok ? (
-                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                            <CheckCircle2 className="w-3 h-3 text-green-600" />
                           ) : (
-                            <XCircle className="w-4 h-4 text-rose-600" />
+                            <XCircle className="w-3 h-3 text-rose-600" />
                           )}
-                          <code className="font-mono text-sm bg-gray-100 p-1 rounded">
+                          <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">
                             {`${a.pred}(${suspect}, ${crime})`}
                           </code>
                         </li>
@@ -382,7 +356,7 @@ export default function CrimeInferenceApp() {
             </Section>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-4 lg:overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${suspect}-${crime}`}
@@ -396,9 +370,9 @@ export default function CrimeInferenceApp() {
                   description={`Verdict pour : is_guilty(${suspect}, ${crime})`}
                   icon={
                     evaluation.guilty ? (
-                      <CheckCircle2 className="w-6 h-6 text-green-700" />
+                      <CheckCircle2 className="w-5 h-5 text-green-700" />
                     ) : (
-                      <XCircle className="w-6 h-6 text-rose-700" />
+                      <XCircle className="w-5 h-5 text-rose-700" />
                     )
                   }
                   isGuilty={evaluation.guilty}
@@ -408,14 +382,14 @@ export default function CrimeInferenceApp() {
 
             <Section
               title={`Aperçu rapide - ${crime}`}
-              icon={<BookOpen className="w-5 h-5" />}
+              icon={<BookOpen className="w-4 h-4" />}
             >
-              <div className="overflow-hidden rounded-2xl border border-gray-200">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-600">
+              <div className="overflow-hidden rounded-xl border border-gray-200">
+                <table className="min-w-full text-xs">
+                  <thead className="bg-gray-50 text-[10px] font-semibold uppercase tracking-wider text-gray-600">
                     <tr>
-                      <th className="px-4 py-3 text-left">Suspect</th>
-                      <th className="px-4 py-3 text-left">Verdict</th>
+                      <th className="px-3 py-2 text-left">Suspect</th>
+                      <th className="px-3 py-2 text-left">Verdict</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -424,17 +398,17 @@ export default function CrimeInferenceApp() {
                         key={s}
                         className="bg-white border-b border-gray-100 last:border-b-0"
                       >
-                        <td className="px-4 py-3 font-medium capitalize text-gray-800">
+                        <td className="px-3 py-2 font-medium capitalize text-gray-800">
                           {s}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2">
                           {verdict ? (
-                            <span className="inline-flex items-center gap-1.5 font-medium text-green-600">
-                              <CheckCircle2 className="w-4 h-4" /> Coupable
+                            <span className="inline-flex items-center gap-1 font-medium text-green-600">
+                              <CheckCircle2 className="w-3 h-3" /> Coupable
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 font-medium text-rose-600">
-                              <XCircle className="w-4 h-4" /> Non coupable
+                            <span className="inline-flex items-center gap-1 font-medium text-rose-600">
+                              <XCircle className="w-3 h-3" /> Non coupable
                             </span>
                           )}
                         </td>
